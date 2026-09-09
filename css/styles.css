@@ -180,7 +180,7 @@ nav .nav-item:last-of-type{border-bottom:1px solid var(--hair)}
   /* the arc owns touch input on desktop; on mobile the browser must have it
      back, or the page cannot be scrolled at all. */
   html,body{height:auto;min-height:100%;
-    overflow:auto;touch-action:auto;overscroll-behavior:auto;
+    overflow:visible;touch-action:auto;overscroll-behavior:auto;
     -webkit-overflow-scrolling:touch}
   .sky,.hint,.count,.card{display:none}
   header{padding:0 var(--mgap);height:56px;gap:12px}
