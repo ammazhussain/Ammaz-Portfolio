@@ -40,6 +40,7 @@ PROJECTS.forEach((p,i)=>{
 let target = 0, u = 0, idle = null, active = -1, t0 = performance.now();
 const clamp = v => Math.max(0, Math.min(U_MAX, v));
 const locked = () => document.body.dataset.locked === '1';
+const isMobile = () => innerWidth <= 960;   // arc is hidden; browser owns scrolling
 
 function nudge(d){
   target = clamp(target + d);
@@ -47,21 +48,20 @@ function nudge(d){
   idle = setTimeout(()=>{ target = nearestAnchor(target); }, 150);
 }
 addEventListener('wheel', e=>{
-  if(locked()) return;
+  if(isMobile() || locked()) return;
   e.preventDefault();
   nudge(e.deltaY * 0.0021);
 },{passive:false});
 
 addEventListener('keydown', e=>{
   if(e.key==='Escape') return closeAll();
-  if(locked()) return;
+  if(isMobile() || locked()) return;   // mobile: arrows and space scroll the page
   const i = Math.round(toIndex(target));
   if(['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); target = anchors[Math.min(N-1,i+1)]; }
   if(['ArrowUp','ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); target = anchors[Math.max(0,i-1)]; }
 });
 
 let ty=null;
-const isMobile = () => innerWidth <= 960;   // arc is hidden; browser owns scrolling
 addEventListener('touchstart', e=>{
   if(isMobile()) return;
   ty = e.touches[0].clientY;
