@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selected Work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,50,1&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="field"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grain"></div>
+
+<header>
+  <div class="mark"><strong>Ammaz Hussain</strong><span>Design &amp; development · 2019–2026</span></div>
+  <button class="hbtn" id="openAbout">Get in touch</button>
+</header>
+
+<div class="sky" id="sky"></div>
+
+<div class="left">
+  <h1><em>Selected</em><em>Work</em></h1>
+  <p class="blurb">Interfaces built for teams that care how things feel. Scroll to move through the timeline.</p>
+  <nav>
+    <button class="nav-item" data-panel="services">Services <span class="arw">→</span></button>
+    <button class="nav-item" data-panel="cv">Career &amp; CV <span class="arw">→</span></button>
+    <button class="nav-item" data-panel="about">About &amp; pricing <span class="arw">→</span></button>
+  </nav>
+</div>
+
+<figure class="card" id="card">
+  <div class="shot">
+    <img id="shotImg" alt="" style="display:none">
+    <div class="ph" id="shotPh"></div>
+    <div class="stack" id="stack">COMMERCE</div>
+  </div>
+  <figcaption class="cap">
+    <h2 id="pTitle">—</h2><span id="pDom">—</span>
+  </figcaption>
+</figure>
+
+<div class="mlist" id="mlist"></div>
+
+<div class="hint"><i></i> Scroll, drag or use arrow keys</div>
+<div class="count"><b id="cNum">01</b> — <span id="cTot">06</span></div>
+
+<section class="panel" id="p-services" aria-hidden="true" tabindex="-1">
+  <h3>Services</h3>
+  <div class="grid">
+    <div><h4>Product interfaces</h4><p>End-to-end design and build of web applications, from first wireframe through to a shipped, tested front end.</p></div>
+    <div><h4>Marketing sites</h4><p>Fast, accessible sites with motion that earns its place. Built to be handed off and edited without a developer.</p></div>
+    <div><h4>Design systems</h4><p>Component libraries, tokens and documentation so a growing team stays visually consistent as it scales.</p></div>
+    <div><h4>Audits</h4><p>A written review of performance, accessibility and interaction quality, with a prioritised list of fixes.</p></div>
+  </div>
+</section>
+
+<section class="panel" id="p-cv" aria-hidden="true" tabindex="-1">
+  <h3>Career</h3>
+  <div class="grid">
+    <div><h4>Experience</h4><ul>
+      <li><span>Senior Front-End Engineer</span><span>2023—now</span></li>
+      <li><span>Product Designer</span><span>2021—2023</span></li>
+      <li><span>Freelance Developer</span><span>2019—2021</span></li>
+    </ul></div>
+    <div><h4>Tools</h4><ul>
+      <li><span>TypeScript, React, Next.js</span></li>
+      <li><span>GSAP, WebGL, Framer Motion</span></li>
+      <li><span>Figma, Node, Postgres</span></li>
+    </ul></div>
+    <div><h4>Full document</h4><p>Two pages, updated September 2026.</p>
+      <a class="dl" href="cv.pdf" download>Download CV</a></div>
+  </div>
+</section>
+
+<section class="panel" id="p-about" aria-hidden="true" tabindex="-1">
+  <h3>About</h3>
+  <div class="grid">
+    <div><h4>Brief</h4><p>Ten years across agency and product work. I take on two client projects at a time so each one gets proper attention.</p></div>
+    <div><h4>Engagements</h4><ul>
+      <li><span>Audit</span><span>from $1,200</span></li>
+      <li><span>Landing page</span><span>from $4,000</span></li>
+      <li><span>Product build</span><span>from $12,000</span></li>
+      <li><span>Retainer</span><span>from $3,500/mo</span></li>
+    </ul></div>
+    <div><h4>Contact</h4><p>hello@yourdomain.com<br>Reply within one working day.</p>
+      <a class="dl" href="mailto:hello@yourdomain.com">Start a project</a></div>
+  </div>
+</section>
+
+<button class="close" id="closeBtn">Close</button>
+
+<script src="data/projects.js" defer></script>
+<script src="js/main.js" defer></script>
+</body>
+</html>
