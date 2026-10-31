@@ -114,6 +114,7 @@ nav .nav-item:last-of-type{border-bottom:1px solid var(--hair)}
 .grid h4{font-family:"Fraunces",serif;font-weight:600;font-variation-settings:"SOFT" 50,"WONK" 1;
   font-size:16px;margin-bottom:12px}
 .grid p{font-size:14px;line-height:1.72;color:var(--muted);max-width:none;font-weight:400}
+.grid p.note{font-size:12.5px;line-height:1.65;margin-top:16px;opacity:.8}
 .grid ul{list-style:none}
 .grid li{font-size:13.5px;line-height:1.9;color:var(--muted);font-weight:500;
   border-bottom:1px solid var(--hair);padding:9px 0;display:flex;

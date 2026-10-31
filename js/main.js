@@ -200,7 +200,7 @@ foot.className = 'mfoot';
 foot.innerHTML =
   `<h3>Have a project in mind?</h3>
    <p>Taking on two clients at a time. Tell me what you are building.</p>
-   <a href="mailto:hello@yourdomain.com">Start a project <i>&rarr;</i></a>`;
+   <a href="mailto:ammazammaz.ussain2002@gmail.com">Start a project <i>&rarr;</i></a>`;
 mlist.appendChild(foot);
 
 /* ---------- panels ---------- */

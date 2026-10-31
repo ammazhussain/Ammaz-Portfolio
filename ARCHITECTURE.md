@@ -1,4 +1,4 @@
-# Ammaz Portfolio — agent instructions
+# Ammaz Portfolio — architecture notes
 
 A single-page portfolio. No build step, no dependencies, no framework. Open
 `index.html` in a browser and it runs.
