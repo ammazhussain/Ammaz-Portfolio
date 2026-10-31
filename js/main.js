@@ -149,21 +149,21 @@ requestAnimationFrame(frame);
 
 /* ---------- card ---------- */
 const card = document.getElementById('card');
-const shotImg = document.getElementById('shotImg'), shotPh = document.getElementById('shotPh');
+const shot     = card.querySelector('.shot'),
+      shotPage = document.getElementById('shotPage'),
+      shotPlate= document.getElementById('shotPlate'),
+      shotLogo = document.getElementById('shotLogo');
 function paint(i){
   const p = PROJECTS[i];
   document.getElementById('pTitle').textContent = p.title;
   document.getElementById('pDom').textContent   = `${p.year} — ${p.dom}`;
   document.getElementById('stack').textContent  = p.stack;
   document.getElementById('cNum').textContent   = String(i+1).padStart(2,'0');
-  if(p.img){
-    shotImg.src = p.img; shotImg.alt = p.title;
-    shotImg.style.display='block'; shotPh.style.display='none';
-  }else{
-    shotImg.style.display='none'; shotPh.style.display='grid';
-    shotPh.style.background = p.c;
-    shotPh.textContent = p.title.split(' ').map(w=>w[0]).join('');
-  }
+  shotPlate.style.background = p.c;
+  shotLogo.src = p.logo; shotLogo.alt = p.title;
+  // No capture means nothing to scroll: .nopage parks the plate (see styles).
+  shot.classList.toggle('nopage', !p.page);
+  shotPage.style.backgroundImage = p.page ? `url("${p.page}")` : 'none';
 }
 document.getElementById('cTot').textContent = String(N).padStart(2,'0');
 paint(0);
@@ -179,14 +179,14 @@ mlist.appendChild(head);
 PROJECTS.forEach(p=>{
   const art = document.createElement('article');
   art.className = 'mcard';
-  const media = p.img
-    ? `<img src="${p.img}" alt="${p.title}">`
-    : `<div style="position:absolute;inset:0;display:grid;place-items:center;
-         background:${p.c};font-family:Fraunces,serif;font-weight:600;font-size:50px;
-         color:rgba(252,250,246,.92)">${p.title.split(' ').map(w=>w[0]).join('')}</div>`;
+  const page = p.page ? `background-image:url('${p.page}')` : '';
   art.innerHTML =
     `<div class="myear">${p.year}</div>
-     <div class="shot">${media}<div class="stack">${p.stack}</div></div>
+     <div class="shot${p.page ? '' : ' nopage'}">
+       <div class="page" style="${page}"></div>
+       <div class="plate" style="background:${p.c}"><img src="${p.logo}" alt="${p.title}"></div>
+       <div class="stack">${p.stack}</div>
+     </div>
      <div class="mbody">
        <h3>${p.title}</h3>
        <p class="mdom">${p.dom}</p>

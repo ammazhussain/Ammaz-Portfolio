@@ -169,7 +169,7 @@ Consequences to respect:
 Both renderers read the same array:
 
 - **Desktop** — `paint(i)` fills the fixed card (`#pTitle`, `#pDom`, `#stack`,
-  `#cNum`, and either the image or a coloured initials placeholder).
+  `#cNum`, the logo plate and the page capture).
 - **Mobile** — the `.mlist` cards are generated in the same file from the same
   loop.
 
@@ -180,8 +180,33 @@ file. If a project should appear in one view only, that is a field on the
 project, not a fork of the code.
 
 Fields: `year`, `name` (arc label), `title`, `dom`, `stack`, `ang`, `w`,
-`img` (empty string gives the initials placeholder on colour `c`), `c`, and an
-optional `url` (mobile CTA only; falls back to `#`).
+`logo`, `page`, `c`, and an optional `url` (mobile CTA only; falls back
+to `#`).
+
+### The card: logo at rest, page on hover
+
+`.shot` holds two layers. `.plate` is the client's `logo` centred on colour
+`c` — that is the card at rest, and it is all a phone ever shows. `.page` is
+a **full-page capture, hero to footer**, pinned to the frame width with
+`background-size:100% auto`; hovering fades the plate out and runs
+`background-position` from `top` to `bottom` over 6.5s, so the card walks
+down the real site.
+
+- `page:""` means there is nothing to scroll. `paint()` puts `.nopage` on
+  `.shot`, and every hover rule is written `.shot:not(.nopage)`, so the plate
+  stays put. That is the state an unreleased project sits in.
+- **`c` is chosen for the logo, not for the brand.** A dark mark needs a light
+  plate. Optimus ships a mark with its own dark tile, so `c` matches that tile
+  rather than fighting it.
+- Captures are **1280px wide WebP**, taken with the page scrolled through
+  first so lazy sections reveal, then run through a pass that collapses long
+  runs of identical rows. Without that pass a scroll-pinned hero leaves
+  thousands of blank pixels and the hover sits on an empty band for seconds.
+  Optimus came out of the browser 10,636px tall and left at 5,584px.
+- The travel is `background-position`, which repaints rather than compositing.
+  It is one element inside a 16:10 frame and it only runs on hover, so it does
+  not compete with `frame()`. Do not promote it to a transform without
+  checking it still lands exactly on the footer at every card width.
 
 ---
 

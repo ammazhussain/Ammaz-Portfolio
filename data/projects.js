@@ -5,16 +5,26 @@
           stack, even when two rings are close together.
    w    — scroll weight. 1 = normal. Give a busy year 2 or 3
           and it takes that much more scrolling to pass through.
+   logo — the client's mark. This is the card at rest.
+   page — full-page capture, hero to footer. Revealed on hover
+          and scrolled top to bottom. Empty = logo only, which
+          is what an unreleased project gets.
+   c    — the plate behind the logo. Pick it for the logo's own
+          contrast, not for the brand: a dark mark needs a light
+          plate and the other way round.
    ═══════════════════════════════════════════════════════════ */
 const PROJECTS = [
   {year:"2026", name:"Optimus Medical", title:"Optimus Medical", dom:"Medical supply · Site + CMS",
-   stack:"HEALTHCARE", ang: -5, w:2, img:"assets/optimus-medical.png", c:"#0E3B42",
+   stack:"HEALTHCARE", ang: -5, w:2, c:"#08262A",
+   logo:"assets/logo-optimus.svg", page:"assets/optimus-medical-page.webp",
    url:"https://optimusmedicalpak.com"},
 
   {year:"2026", name:"Maken Brothers", title:"Maken Brothers", dom:"Construction · Site + SEO",
-   stack:"CONSTRUCTION", ang: 10, w:2, img:"assets/maken-brothers.webp", c:"#6E5C48",
+   stack:"CONSTRUCTION", ang: 10, w:2, c:"#EFEBE3",
+   logo:"assets/logo-maken.svg", page:"assets/maken-brothers-page.webp",
    url:"https://makenbrothers.com"},
 
-  {year:"2026", name:"Accounting ERP", title:"Accounting ERP", dom:"Finance · In development",
-   stack:"ERP", ang: -7, w:1, img:"", c:"#4E5A66"},
+  {year:"2026", name:"HimmelTEK", title:"HimmelTEK", dom:"Accounting ERP · In development",
+   stack:"ERP", ang: -7, w:1, c:"#F3F6FB",
+   logo:"assets/logo-himmeltek.png", page:""},
 ];
