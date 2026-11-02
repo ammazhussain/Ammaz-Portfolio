@@ -27,4 +27,9 @@ const PROJECTS = [
   {year:"2026", name:"HimmelTEK", title:"HimmelTEK", dom:"Accounting ERP · In development",
    stack:"ERP", ang: -7, w:1, c:"#F3F6FB",
    logo:"assets/logo-himmeltek.png", page:""},
+
+  {year:"2026", name:"LumiLife", title:"LumiLife", dom:"Smart wearables · Store + app site",
+   stack:"WEARABLES", ang: 14, w:2, c:"#0B3A22",
+   logo:"assets/logo-lumilife.png", page:"",
+   url:"https://ammazhussain.github.io/LumiLife-Refactor/"},
 ];
