@@ -30,6 +30,6 @@ const PROJECTS = [
 
   {year:"2026", name:"LumiLife", title:"LumiLife", dom:"Smart wearables · Store + app site",
    stack:"WEARABLES", ang: 14, w:2, c:"#0B3A22",
-   logo:"assets/logo-lumilife.png", page:"",
+   logo:"assets/logo-lumilife.png", page:"assets/lumilife-page.webp",
    url:"https://ammazhussain.github.io/LumiLife-Refactor/"},
 ];
