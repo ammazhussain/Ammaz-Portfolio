@@ -151,6 +151,7 @@ requestAnimationFrame(frame);
 const card = document.getElementById('card');
 const shot     = card.querySelector('.shot'),
       shotPage = document.getElementById('shotPage'),
+      shotVid  = document.getElementById('shotVid'),
       shotPlate= document.getElementById('shotPlate'),
       shotLogo = document.getElementById('shotLogo');
 function paint(i){
@@ -161,10 +162,35 @@ function paint(i){
   document.getElementById('cNum').textContent   = String(i+1).padStart(2,'0');
   shotPlate.style.background = p.c;
   shotLogo.src = p.logo; shotLogo.alt = p.title;
-  // No capture means nothing to scroll: .nopage parks the plate (see styles).
-  shot.classList.toggle('nopage', !p.page);
-  shotPage.style.backgroundImage = p.page ? `url("${p.page}")` : 'none';
+  // No recording means nothing to walk: .nopage parks the plate (see styles).
+  shot.classList.toggle('nopage', !p.vid);
+  shotPage.style.backgroundImage = 'none';
+  stopWalk();
+  // Only set src when there is one. Assigning '' would make the browser re-request the
+  // page itself as a video.
+  if (p.vid) shotVid.src = p.vid; else shotVid.removeAttribute('src');
 }
+
+/* ---------- the walk ---------- */
+// Hovering plays the recording from the top; leaving rewinds it, so the next hover starts
+// at the hero rather than halfway down someone else's scroll.
+function startWalk(){
+  if (!shotVid.getAttribute('src') || isMobile()) return;
+  shotVid.currentTime = 0;
+  // .playing only once it really is: autoplay can be refused, and the plate must not lift
+  // off an empty frame. A hover that ended while the video was still loading leaves no mark.
+  shotVid.play()
+    .then(() => { if (card.matches(':hover')) shot.classList.add('playing'); })
+    .catch(() => {});
+}
+function stopWalk(){
+  shot.classList.remove('playing');
+  if (!shotVid.getAttribute('src')) return;
+  shotVid.pause();
+  shotVid.currentTime = 0;
+}
+card.addEventListener('mouseenter', startWalk);
+card.addEventListener('mouseleave', stopWalk);
 document.getElementById('cTot').textContent = String(N).padStart(2,'0');
 paint(0);
 

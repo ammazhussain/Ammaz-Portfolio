@@ -34,6 +34,10 @@
 <figure class="card" id="card">
   <div class="shot">
     <div class="page" id="shotPage"></div>
+    <!-- The walk down the page is a recording now, not a scrolled strip: these sites drive
+         sections from scroll position, which only a real scroll can show. preload="none"
+         keeps it off the wire until someone actually hovers. -->
+    <video class="vid" id="shotVid" muted loop playsinline preload="none"></video>
     <div class="plate" id="shotPlate"><img id="shotLogo" alt=""></div>
     <div class="stack" id="stack">COMMERCE</div>
   </div>

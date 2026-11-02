@@ -88,14 +88,23 @@ nav .nav-item:last-of-type{border-bottom:1px solid var(--hair)}
 .shot .page{position:absolute;inset:0;background-color:var(--ivory-deep);
   background-repeat:no-repeat;background-size:100% auto;background-position:center top;
   transition:background-position 6.5s cubic-bezier(.38,0,.28,1)}
+/* The recording sits where the strip does and is only painted once it plays, so at rest
+   this is an empty box behind the plate. */
+.shot .vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center top;opacity:0;transition:opacity .45s ease;background:var(--ivory-deep)}
+.shot.playing .vid{opacity:1}
 .shot .plate{position:absolute;inset:0;display:grid;place-items:center;
   transition:opacity .5s ease}
 .shot .plate img{width:44%;max-width:160px;height:auto;display:block}
 
+/* The plate lifts when the recording is actually running, not merely on hover: if playback
+   is refused the logo stays put rather than uncovering an empty frame. */
+.shot.playing .plate{opacity:0}
+
 @media (hover:hover){
-  .card:hover  .shot:not(.nopage) .plate,
   .mcard:hover .shot:not(.nopage) .plate{opacity:0}
-  .card:hover  .shot:not(.nopage) .page,
+  /* The mobile list keeps the scrolled strip — it is only ever seen on a narrow desktop
+     window, and is not worth a second video download. */
   .mcard:hover .shot:not(.nopage) .page{background-position:center bottom}
 }
 /* Touch has no hover, so the plate simply stays and "View project" does the
