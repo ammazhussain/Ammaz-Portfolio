@@ -1,16 +1,44 @@
-// Full-page capture by scroll-stitching.
-// A single captureBeyondViewport shot renders scroll-pinned sections mid-nothing (blank
-// gaps). Walking the page viewport by viewport and stacking the frames reproduces what a
-// visitor actually sees.
-// ponytail: frames are stacked by handing them back to Chrome as one tall HTML page, so
-// there is no image library here. Reach for sharp only if stitching needs real compositing.
+// Capture a site as the tall strip the portfolio cards walk on hover.
+//
+// Scroll-animated sites fight back. Three approaches, in the order they were tried:
+//   1. One captureBeyondViewport shot — pinned sections render at scroll progress 0, which
+//      is usually empty, so the page comes out with blank gaps where its best work is.
+//   2. Stitch viewport frames down the page — no gaps, but anything that moves with scroll
+//      (marquee, parallax, pinned panel) sits elsewhere in each frame, so the joins tear
+//      through it, and pinned sections show up twice.
+//   3. What this does: wake the page up by scrolling through it once (that is what starts
+//      lazy images and fires reveal observers), settle it into one coherent state, and take
+//      a single shot. Clean, at the cost of pinned sections — see --pin and --top.
 //
 // Needs: chrome --headless=new --remote-debugging-port=9222
-// Usage: node tools-capture-page.mjs <url> assets/<name>-page.webp
-import { writeFileSync } from 'fs';
+// Usage: node tools-capture-page.mjs <url> assets/<name>-page.webp [--top=<px>] [--pin=<0..1>]
+//
+// In use for this portfolio:
+//   LumiLife  --top=2600   hero, the idea, the collection
+//   Optimus   --top=1760   hero, equipment row
+//   Maken     not captured this way: its page is one sticky track, so collapsing flattens
+//             the whole site to 900px. Its capture predates this script.
+import { writeFileSync, unlinkSync } from 'fs';
 import { pathToFileURL } from 'url';
 
-const [, , url, out] = process.argv;
+const [, , url, out, ...rest] = process.argv;
+// --pin=<0..1>: where in a pinned section's scroll track to shoot its panel, as a fraction
+// of the track. Omit it and pinned tracks are collapsed away instead — clean, but a section
+// whose panel is empty at progress 0 drops out of the capture. There is no right default
+// here; it depends on where the section's own animation peaks, so it stays a knob.
+// --top=<px>: capture only the first <px> of the page. At the ~29% these strips are shown
+// at, the whole page is a blur anyway; the top few screens read as real design.
+const topPx = (() => {
+  const a = rest.find(x => x.startsWith('--top'));
+  const v = a ? parseInt(a.split('=')[1] ?? '', 10) : NaN;
+  return Number.isFinite(v) && v > 0 ? v : null;
+})();
+const pinAt = (() => {
+  const a = rest.find(x => x.startsWith('--pin'));
+  if (!a) return null;
+  const v = parseFloat(a.split('=')[1] ?? '0.5');
+  return Number.isFinite(v) ? Math.min(Math.max(v, 0), 1) : 0.5;
+})();
 const W = 1440, H = 900;
 const log = (...a) => console.error('·', ...a);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -76,61 +104,150 @@ const imagesInView = `[...document.images]
   .every(i => i.naturalWidth > 0)`;
 await sleep(2500);
 
-// ---- 2. walk it, one viewport at a time ----
-const height = await page.evalIn(`Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)`);
-log('scroll height', height);
-// Offsets to shoot. The last one is clamped so the final frame ends exactly at the page
-// bottom instead of overshooting into repeated content.
-const offsets = [];
-for (let y = 0; y < height; y += H) offsets.push(Math.min(y, Math.max(0, height - H)));
-const stops = [...new Set(offsets)];
-
-const frames = [];
-for (const [n, y] of stops.entries()) {
+// ---- 2. walk the page once, to wake it up ----
+// Not for capturing — for side effects. Scrolling is what starts loading="lazy" images and
+// fires the IntersectionObserver reveals, and those reveals are one-shot: once tripped they
+// stay revealed after we scroll back.
+const height0 = await page.evalIn(`Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)`);
+log('scroll height', height0);
+for (let y = 0; y < height0; y += H) {
   await page.evalIn(`scrollTo({top:${y}, behavior:'instant'}); 1`);
-  await sleep(600);                       // let scroll-driven sections settle at this offset
+  await sleep(450);
   await until(imagesInView, 15000, `images at ${y}`);
-  await sleep(300);                       // decode after load
-  const { data } = await page.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-  frames.push({ y, data });
-  log('frame', n + 1, 'at', y);
-  // position:fixed chrome (nav, cart bar) rides along on every frame and would stripe the
-  // stitched image. Keep it on the first frame only. Two things are deliberately spared:
-  // position:sticky, which is how pinned scroll sections are built, and tall fixed blocks
-  // like a reveal-footer that the page scrolls over — those belong in the capture.
-  // ponytail: height is the whole test. If a site ever grows a tall fixed sidebar it will
-  //           stripe; switch to "rect stays put across two scrolls" if that shows up.
-  if (n === 0) {
-    const hidden = await page.evalIn(`(() => {
-      const out = [];
-      for (const el of document.body.querySelectorAll('*')) {
-        if (getComputedStyle(el).position !== 'fixed') continue;
-        if (el.getBoundingClientRect().height >= 300) continue;
-        el.style.setProperty('visibility', 'hidden', 'important');
-        out.push(el.tagName.toLowerCase() + (el.className ? '.' + String(el.className).split(' ')[0] : ''));
-      }
-      return out.join(', ');
-    })()`);
-    log('hid for later frames:', hidden || '(nothing)');
-  }
 }
-page.close();
+await page.evalIn(`scrollTo({top:0, behavior:'instant'}); 1`);
+await sleep(1200);
 
-// ---- 3. stack the frames and shoot them once ----
-const total = Math.max(height, H);
-const imgs = frames
-  .map(f => `<img src="data:image/png;base64,${f.data}" style="position:absolute;top:${f.y}px;left:0;width:${W}px">`)
+// ---- 3. settle it, so one shot is enough ----
+// Stitching scroll frames was the obvious way to capture a tall page, and it is wrong here:
+// anything that moves with scroll position (a marquee, a parallax image, a pinned panel) sits
+// at a different place in each frame, so the joins cut straight through it. Instead, freeze
+// the page into one coherent state and take a single shot.
+const settled = await page.evalIn(`(() => {
+  const notes = [];
+
+  // Animations to their end state, not paused mid-fade. An infinite animation has no end,
+  // so pause it where it stands.
+  let fin = 0, held = 0;
+  for (const a of document.getAnimations()) {
+    try { a.finish(); fin++; } catch { a.pause(); held++; }
+  }
+  notes.push(fin + ' animations finished, ' + held + ' paused');
+
+  // A pinned section reserves a tall scroll track and sticks a panel inside it, driven by
+  // scroll progress. Captured beyond the viewport the panel renders at progress 0 — often
+  // empty — leaving the track as a blank gap. Without --pin, collapse the track so the gap
+  // goes away. With --pin, leave it standing: step 3b pastes a real frame of the panel in.
+  let collapsed = 0;
+  if (${pinAt === null}) {
+    for (const el of document.body.querySelectorAll('*')) {
+      if (getComputedStyle(el).position !== 'sticky') continue;
+      const track = el.parentElement;
+      if (!track) continue;
+      const own = el.getBoundingClientRect().height;
+      if (own > 0 && track.getBoundingClientRect().height > own * 1.2) {
+        track.style.setProperty('height', Math.ceil(own) + 'px', 'important');
+        collapsed++;
+      }
+    }
+  }
+  notes.push(collapsed + ' pinned tracks collapsed');
+
+  // A reveal-footer is fixed behind the page and shows through at the bottom. Beyond the
+  // viewport it would float wherever the viewport is, so return it to the document flow and
+  // let it land at the end where a visitor meets it.
+  let freed = 0;
+  for (const el of document.body.querySelectorAll('*')) {
+    const cs = getComputedStyle(el);
+    if (cs.position === 'fixed' && el.getBoundingClientRect().height >= 300) {
+      el.style.setProperty('position', 'static', 'important');
+      freed++;
+    }
+  }
+  notes.push(freed + ' tall fixed blocks returned to flow');
+
+  return notes.join('; ');
+})()`);
+log(settled);
+await sleep(1500);
+
+// ---- 3b. one good frame of each pinned panel ----
+// A pinned section reserves a tall scroll track and sticks a panel inside it, then drives
+// that panel from scroll progress. Captured beyond the viewport it renders at progress 0 —
+// usually empty — which is the blank gap. So shoot each panel where it is actually showing
+// something, mid-track, and paste that frame back over the gap afterwards. The seams land
+// inside the track's own dead space, where nothing moves, so nothing tears.
+const tracks = pinAt === null ? '[]' : await page.evalIn(`JSON.stringify([...document.body.querySelectorAll('*')]
+  .filter(el => getComputedStyle(el).position === 'sticky' && el.parentElement)
+  .map(el => {
+    const track = el.parentElement, r = track.getBoundingClientRect();
+    return { top: Math.round(r.top + scrollY), height: Math.round(r.height),
+             name: track.tagName.toLowerCase() + (track.className ? '.' + String(track.className).split(' ')[0] : '') };
+  })
+  .filter(t => t.height > ${H} * 1.2))`);
+
+const patches = [];
+for (const t of JSON.parse(tracks || '[]')) {
+  // Mid-track: far enough in that the panel has something to show, not so far that it is
+  // already animating out.
+  const y = Math.round(t.top + (t.height - H) * pinAt);
+  await page.evalIn(`scrollTo({top:${'${y}'}, behavior:'instant'}); 1`);
+  await sleep(900);
+  await until(imagesInView, 15000, `images at ${'${y}'}`);
+  const f = await page.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+  if (f?.data) { patches.push({ y, data: f.data }); log('pinned panel', t.name, 'shot at', y); }
+}
+await page.evalIn(`scrollTo({top:0, behavior:'instant'}); 1`);
+await sleep(800);
+
+// ---- 4. one shot of the whole thing, pinned panels pasted back in ----
+// Measure after the collapse has reflowed, not before: scrolling to the new bottom forces
+// layout and gives the real document height, which is what keeps the footer in frame.
+// Skipped when clipping to the top: that round trip leaves scroll-driven heroes in their
+// scrolled-past state (Optimus's headline vanished), and a clipped capture never needs the
+// true full height anyway.
+if (!topPx) {
+  await page.evalIn(`scrollTo({top: document.body.scrollHeight, behavior:'instant'}); 1`);
+  await sleep(1200);
+  await until(imagesInView, 15000, 'images at the new bottom');
+  await page.evalIn(`scrollTo({top:0, behavior:'instant'}); 1`);
+  await sleep(1500);
+}
+const full = await page.evalIn(`Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.getBoundingClientRect().height)`);
+const height = Math.round(topPx ? Math.min(full, topPx) : full);
+log('height after settling', full, topPx ? `(clipped to ${height})` : '');
+const base = await page.send('Page.captureScreenshot', {
+  format: patches.length ? 'png' : 'webp', quality: 82, captureBeyondViewport: true,
+  clip: { x: 0, y: 0, width: W, height, scale: 1 },
+}, 90000);
+if (!base?.data) { log('capture returned nothing'); process.exit(1); }
+
+if (!patches.length) {
+  writeFileSync(out, Buffer.from(base.data, 'base64'));
+  page.close();
+  console.log(`${out}  ${W}x${height}`);
+  process.exit(0);
+}
+
+page.close();
+// ponytail: compositing is done by handing the layers back to Chrome as one HTML page and
+//           shooting it, so there is no image library here. Reach for sharp only if this
+//           ever needs real blending.
+const layers = [`<img src="data:image/png;base64,${base.data}" style="position:absolute;top:0;left:0;width:${W}px">`]
+  .concat(patches.map(p => `<img src="data:image/png;base64,${p.data}" style="position:absolute;top:${p.y}px;left:0;width:${W}px">`))
   .join('');
 const stackFile = out + '.stack.html';
-writeFileSync(stackFile, `<!DOCTYPE html><html><body style="margin:0;background:#fff;width:${W}px;height:${total}px;position:relative">${imgs}</body></html>`);
+writeFileSync(stackFile, `<!DOCTYPE html><html><body style="margin:0;background:#fff;width:${W}px;height:${height}px;position:relative">${layers}</body></html>`);
 
 const stack = await open(pathToFileURL(stackFile).href);
-await sleep(2500);
+await sleep(3000);
 const shot = await stack.send('Page.captureScreenshot', {
-  format: 'webp', quality: 80, captureBeyondViewport: true,
-  clip: { x: 0, y: 0, width: W, height: total, scale: 1 },
-});
+  format: 'webp', quality: 82, captureBeyondViewport: true,
+  clip: { x: 0, y: 0, width: W, height, scale: 1 },
+}, 90000);
+if (!shot?.data) { log('compositing returned nothing'); process.exit(1); }
 writeFileSync(out, Buffer.from(shot.data, 'base64'));
 stack.close();
-console.log(`${out}  ${frames.length} frames  ${W}x${total}`);
+unlinkSync(stackFile);
+console.log(`${out}  ${W}x${height}  ${patches.length} pinned panel(s) pasted in`);
 process.exit(0);
